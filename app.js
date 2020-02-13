@@ -1,6 +1,7 @@
 const express =require('express');
 const path=require('path');
 const mongoose=require('mongoose');
+const bodyParser=require('body-parser');
 
 mongoose.connect('mongodb://localhost:27017/nodekb');
 let db=mongoose.connection;
@@ -23,9 +24,14 @@ let Article=require('./models/article');
 //load engine
 app.set('views',path.join(__dirname,'views'));
 app.set('view engine','pug');
+
+//body-parser middleware
+app.use(bodyParser.urlencoded({extended:false}))
+
+//parse application/json
+app.use(bodyParser.json())
+
 //home route
-
-
 app.get('/',function(req,res){
    Article.find({},function(err,articles){
        if(err){
@@ -50,6 +56,23 @@ app.get('/articles/add',function(req,res){
         tittle:'Add Article'
     })
 })
+
+//Add submit post route
+app.post('/articles/add',function(req,res){
+    let article=new Article();
+    article.title=req.body.title;
+    article.author=req.body.author;
+    article.body=req.body.body;
+
+    article.save(function(err){
+        if(err){
+            console.log(err);
+            return;
+        }else {
+            res.redirect('/')
+        }
+    });
+});
 
 //start server
 app.listen(3000,function(){

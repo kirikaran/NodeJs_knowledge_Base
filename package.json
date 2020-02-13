@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node app",
-    "dev":"nodemon app.js"
+    "dev": "nodemon app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.17.2",
     "express": "^4.15.3",
     "mongoose": "^4.10.2",
     "pug": "2.0.0-rc.1"
