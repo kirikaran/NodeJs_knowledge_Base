@@ -26,11 +26,15 @@ html
 
 
         .container
+            != message('message', locals)
+            if errors
+                each error, i in errors
+                    div(class="alert alert-danger") #{error.msg}
             block content
             br
             hr
             foooter
-                    p Copyright &copy; 2020
+                p Copyright &copy; 2020
         script(src='/bower_component/jquery/dist/jquery.js')
         script(src='/bower_component/bootstrap/dist/js/bootstrap.js')
         script(src='/js/main.js')

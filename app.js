@@ -2,6 +2,9 @@ const express =require('express');
 const path=require('path');
 const mongoose=require('mongoose');
 const bodyParser=require('body-parser');
+const expressValidator =require('express-validator');
+const flash=require('connect-flash');
+const session=require('express-session');
 
 mongoose.connect('mongodb://localhost:27017/nodekb');
 let db=mongoose.connection;
@@ -33,6 +36,38 @@ app.use(bodyParser.json())
 
 //set public folder
 app.use(express.static(path.join(__dirname,'public')));
+
+//Express Session Middleware
+app.use(session({
+    secret:'keyboard cat',
+    resave:true,
+    saveUninitialized:true
+}));
+
+//Express Message Moddleware
+app.use(require('connect-flash')());
+app.use(function(req,res,next){
+    res.locals.message=require('express-messages')(req,res);
+    next();
+});
+
+//Express Validator Middleware
+app.use(expressValidator({
+    errorFormatter: function(parm,msg,value){
+        var namespace =parm.split('.')
+        , root =namespace.shift()
+        , formParam=root;
+        while(namespace.length){
+            formParam += '[' + namespace.shift() + ']';
+
+        }
+        return{
+            param :formParam,
+            msg:msg,
+            value:value
+        };
+    }
+}));
 
 //home route
 app.get('/',function(req,res){
@@ -71,19 +106,38 @@ app.get('/articles/add',function(req,res){
 
 //Add submit post route
 app.post('/articles/add',function(req,res){
-    let article=new Article();
-    article.title=req.body.title;
-    article.author=req.body.author;
-    article.body=req.body.body;
+    req.checkBody('title','title is required').notEmpty();
+    req.checkBody('author','author is required').notEmpty();
+    req.checkBody('body','body is required').notEmpty();
 
-    article.save(function(err){
-        if(err){
-            console.log(err);
-            return;
-        }else {
-            res.redirect('/')
-        }
-    });
+    //Get errors
+    let errors=req.validationErrors();
+
+    if(errors){
+        res.render('add_article',{
+            title:'Add Article',
+            errors:errors
+        })
+    }else{
+        let article=new Article();
+        article.title=req.body.title;
+        article.author=req.body.author;
+        article.body=req.body.body;
+    
+        article.save(function(err){
+            if(err){
+                console.log(err);
+                return;
+            }else {
+                req.flash('success','Article Added');
+                res.redirect('/')
+            }
+        });
+
+    }
+
+
+   
 });
 
 //Load Edit Form
@@ -110,6 +164,7 @@ app.post('/articles/edit/:id',function(req,res){
             console.log(err);
             return;
         }else {
+            req.flash('succes','article updated');
             res.redirect('/')
         }
     });
